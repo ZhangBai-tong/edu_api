@@ -1,7 +1,6 @@
 import xadmin
 from xadmin import views
 
-from . import models
 from .models import Banner, Nav
 
 

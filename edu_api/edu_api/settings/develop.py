@@ -9,28 +9,24 @@ https://docs.djangoproject.com/en/2.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.0/ref/settings/
 """
-
+import datetime
 import os
-
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import sys
 
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# 需要将修改后的子应用的目录设置为全局的导包路径
 sys.path.insert(0, os.path.join(BASE_DIR, "apps"))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '_*pp@v9u7(g^5kmauhaaz&3&92^jc$nv+4cb152!(edv*)z4xk'
+SECRET_KEY = '#_k!m%1z@liwd%^i#xv)h0c6whi)5-7&u5lpd0$u3_a2&@*m61'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['*'
-    # "api.baizhiedu.com"
-]
+ALLOWED_HOSTS = ['api.baizhiedu.com']
 
 # Application definition
 
@@ -43,20 +39,20 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
-    # xadmin配置
     'xadmin',
     'crispy_forms',
     'reversion',
 
     'home',
+    'user',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     # 'django.middleware.csrf.CsrfViewMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -67,7 +63,7 @@ ROOT_URLCONF = 'edu_api.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        # 'DIRS': [os.path.join(BASE_DIR, "templates")],
+        # 'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -88,7 +84,7 @@ WSGI_APPLICATION = 'edu_api.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': "edu",
+        'NAME': "edu_api",
         'HOST': '127.0.0.1',
         'PORT': 3306,
         'USER': 'root',
@@ -117,15 +113,15 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'zh-hans'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Shanghai'
 
 USE_I18N = True
 
 USE_L10N = True
 
-USE_TZ = True
+USE_TZ = False
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
@@ -188,13 +184,16 @@ LOGGING = {
 }
 
 # 允许跨域请求访问
+CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_ALLOW_ALL = True
 
 # DRF相关配置
 REST_FRAMEWORK = {
-    'EXCEPTION_HANDLER': 'utils.exception.custom_exception_handler',
+    'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
+
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        # 'rest_framework.authentication.SessionAuthentication',
+        # 'rest_framework_jwt.authentication JSONWebTokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.BasicAuthentication'
     ],
     'DEFAULT_THROTTLE_CLASSES': [
@@ -202,3 +201,32 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle'
     ],
 }
+AUTH_USER_MODEL = 'user.UserInfo'
+# AUTHENTICATION_BACKENDS = ['utils.custom_authentication.CustomBackend', ]
+
+# jwt相关配置
+JWT_AUTH = {
+    # 默认的根据载荷生成token的方法
+    # 'JWT_ENCODE_HANDLER':
+    #     'rest_framework_jwt.utils.jwt_encode_handler',
+    # 根据token解析出载荷的方法
+    # 'JWT_DECODE_HANDLER':
+    #     'rest_framework_jwt.utils.jwt_decode_handler',
+    # 根据用户生成载荷的方法
+    # 'JWT_PAYLOAD_HANDLER':
+    #     'rest_framework_jwt.utils.jwt_payload_handler',
+
+    # token的有效时间
+    'JWT_EXPIRATION_DELTA': datetime.timedelta(days=7),
+
+    # jwt返回数据的格式
+    'JWT_RESPONSE_PAYLOAD_HANDLER':
+        'user.service.jwt_response_payload_handler',
+    # token前缀
+    'JWT_AUTH_HEADER_PREFIX': 'basic',
+}
+
+# 自定义多条件登录
+AUTHENTICATION_BACKENDS = [
+    'user.service.UserAuthentication',
+]

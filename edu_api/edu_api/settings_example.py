@@ -11,21 +11,22 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 """
 
 import os
-
+import sys
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(BASE_DIR, "apps"))
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '_*pp@v9u7(g^5kmauhaaz&3&92^jc$nv+4cb152!(edv*)z4xk'
+SECRET_KEY = '#_k!m%1z@liwd%^i#xv)h0c6whi)5-7&u5lpd0$u3_a2&@*m61'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -54,8 +55,7 @@ ROOT_URLCONF = 'edu_api.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates']
-        ,
+        # 'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -76,8 +76,12 @@ WSGI_APPLICATION = 'edu_api.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': "edu_api",
+        'HOST': '127.0.0.1',
+        'PORT': 3306,
+        'USER': 'root',
+        'PASSWORD': '123456',
     }
 }
 
@@ -119,3 +123,78 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# AUTH_USER_MODEL = "user.UserInfo"
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+
+# 日志配置
+LOGGING = {
+    # 版本
+    'version': 1,
+    # 是否禁用已存在的日志器
+    'disable_existing_loggers': False,
+    # 格式化日志信息
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(lineno)d %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(module)s %(lineno)d %(message)s'
+        },
+    },
+    # 日志的过滤信息
+    'filters': {
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+    # 处理日志的方法
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose'
+        },
+        'file': {
+            # 记录到文件中的日志登记
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            # 日志位置 日志的文件名 日志的保存目录
+            'filename': os.path.join(os.path.dirname(BASE_DIR), "logs/lesson_api.log"),
+            # 日志的文件大小  100M
+            'maxBytes': 100 * 1024 * 1024,
+            # 日志的文件数量
+            'backupCount': 10,
+            # 日志的格式
+            'formatter': 'verbose'
+        },
+    },
+    # 日志对象
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'propagate': True,  # 是否让日志信息继续冒泡给其他的日志处理系统
+        },
+    }
+}
+
+# 允许跨域请求访问
+CORS_ALLOW_CREDENTIALS = True
+CORS_ORIGIN_ALLOW_ALL = True
+
+# DRF相关配置
+REST_FRAMEWORK = {
+    'EXCEPTION_HANDLER': 'utils.exception.custom_exception_handler',
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        # 'rest_framework_jwt.authentication JSONWebTokenAuthentication',
+        # 'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication'
+    ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        # 'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+}
