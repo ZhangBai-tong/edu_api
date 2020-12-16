@@ -19,7 +19,7 @@
             <li class="hot" @click="change_order_type('students')" :class="change_order_class('students')">人气</li>
             <li class="price" @click="change_order_type('price')" :class="change_order_class('price')">价格</li>
           </ul>
-          <p class="condition-result">共21个课程</p>
+          <p class="condition-result">共{{ course_list.length}}个课程</p>
         </div>
 
       </div>
@@ -31,15 +31,14 @@
           </div>
           <div class="course-info">
             <h3>
-              <router-link to="/courseDetail"><h3>{{ course.name }}</h3></router-link>
+              <router-link :to="'/detail/'+course.id"><h3>{{ course.name }}</h3></router-link>
               <span><img src="../static/image/avatar1.svg" alt="">{{ course.students }}
               人已加入学习</span>
             </h3>
-            <p class="teather-info">huxz 百知教育教学总监
-              <span>共{{ course.lessons }}课时/{{
-                  course.lessons == course.pub_lessons ? '更新完成' :
-                      `已更新${course.pub_lessons}`
-                }}</span>
+            <p class="teather-info">{{ course.teacher.name }} &nbsp;{{course.teacher.title}}
+              <span>共{{ course.lessons }}课时/{{course.lessons == course.pub_lessons ? '更新完成'
+                  : `已更新${course.pub_lessons}` }}
+              </span>
             </p>
             <ul class="lesson-list">
               <li v-for="(lesson, key) in course.lesson_list" :key="key"><span
@@ -48,7 +47,7 @@
             </ul>
             <div class="pay-box">
               <span class="discount-type">限时免费</span>
-              <span class="discount-price">￥0.00元</span>
+              <span class="discount-price">￥{{ course.discount_price }}元</span>
               <span class="original-price">原价：{{ course.price }}元</span>
               <span class="buy-now">立即购买</span>
             </div>
@@ -85,7 +84,7 @@ export default {
       total: 0,
       filters: {
         type: "id", // 排序类型默认值
-        orders: "desc",   // 排序类型  desc 降序 asc升序
+        orders: "asc",   // 排序类型  desc 降序 asc升序
         page: 1, // 分页的页码
         size: 2, // 每页展示的数量
       }
@@ -145,7 +144,6 @@ export default {
     },
     // 获取所有的课程信息
     get_all_course() {
-
       let filters = {
         // 切换分页后的页面
         page: this.filters.page,
@@ -176,7 +174,7 @@ export default {
   },
   created() {
     this.get_all_category();
-    this.get_all_course()
+    this.get_all_course();
   },
   components: {
     Header: Header,

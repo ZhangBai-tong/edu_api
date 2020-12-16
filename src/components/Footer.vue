@@ -38,7 +38,6 @@ export default {
   },
   created() {
     this.get_all_nav()
-    console.log(41)
   },
 }
 </script>

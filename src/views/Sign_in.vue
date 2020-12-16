@@ -151,7 +151,27 @@ export default {
         this.btntxt = "发送验证码";
         this.disabled = false;
       }
-    }
+    },
+    // check_code() {
+    //   this.$axios({
+    //     url: this.$settings.HOST + "user/check_code_login/",
+    //     method: 'post',
+    //     data: {
+    //       sms_code: this.sms_code,
+    //     }
+    //   }).then(response => {
+    //     console.log(response)
+    //     this.phone_flag = true
+    //   }).catch(error => {
+    //     console.log(error)
+    //     this.$message({
+    //       message: "验证码不正确",
+    //       type: 'error',
+    //       duration: 2000,
+    //     })
+    //   })
+    //
+    // },
   }
 }
 </script>

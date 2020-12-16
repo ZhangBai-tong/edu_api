@@ -9,17 +9,16 @@
         <ul class="nav full-left" v-for="(nav, index) in nav_list" :key="index">
           <li>
             <router-link to="/course" target="_blank" style="font-size: 16px">{{ nav.title }}</router-link>
-            <!--            <a :href="nav.link">{{ nav.title }}</a>-->
           </li>
 
         </ul>
         <div class="login-bar full-right" v-if="token">
           <div class="shop-cart full-left">
             <img src="../static/image/cart.svg" alt="">
-            <span><router-link to="/cart">购物车</router-link></span>
+            <span><router-link to="/cart">{{ this.$store.state.cart_length }}购物车</router-link></span>
           </div>
           <div class="login-box full-left">
-            <router-link to="/login" style="color: chocolate">个人中心</router-link>
+            <router-link to="/" style="color: chocolate">个人中心</router-link>
             &nbsp;|&nbsp;
             <span @click="login_out">退出登录</span>
           </div>
@@ -77,7 +76,6 @@ export default {
   },
   created() {
     this.get_all_nav()
-    console.log(75)
     this.get_token()
   },
 }

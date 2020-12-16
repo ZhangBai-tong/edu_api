@@ -14,7 +14,7 @@
           <span @click="login_type=1">短信登录</span>
         </div>
         <div class="inp" v-if="login_type==0">
-          <input type="text" placeholder="用户名 / 手机号码 / 邮箱" class="user" v-model="username" @click="check_phone1">
+          <input type="text" placeholder="用户名 / 手机号码 / 邮箱" class="user" v-model="username">
           <input type="password" name="" class="pwd" placeholder="密码" v-model="password">
           <div id="geetest1"></div>
           <div class="rember">
@@ -23,7 +23,7 @@
             </p>
             <p>忘记密码</p>
           </div>
-          <el-button type="success" class="login_btn" @click="get_captcha"
+          <el-button type="success" class="login_btn" @click="login_btn"
                      :disabled="!username || !password">登录
           </el-button>
           <p class="go_login">没有账号
@@ -31,13 +31,12 @@
           </p>
         </div>
         <div class="inp" v-show="login_type==1">
-          <input type="text" placeholder="手机号码" class="user" @blur="check_phone">
+          <input type="text" v-model="phone" placeholder="手机号码" class="user" @blur="check_phone">
           <input type="text" v-model="sms_code" class="pwd" placeholder="短信验证码">
           <el-button :disabled="disabled" @click="get_code" class="btn" type="primary" plain size="mini">
             {{ btntxt }}
           </el-button>
           <el-button type="success" class="login_btn" @click="login_message">登录</el-button>
-
           <span class="go_login">没有账号
                     <router-link to="/sign_in">立即注册</router-link>
                 </span>
@@ -57,23 +56,132 @@ export default {
       username: "",
       password: "",
       remember_me: false,
+      phone: "",
+      phone_flag: false,
       sms_code: "",
+      disabled: false,
+      time: 60,
       btntxt: "获取验证码",
     }
   },
   methods: {
-    check_phone1() {
-      if (this.phone === "") {
+    get_code() {
+      if (this.phone_flag) {
+        this.$axios({
+          url: this.$settings.HOST + 'user/message/',
+          method: 'get',
+          params: {
+            phone: this.phone,
+          }
+        }).then(response => {
+          console.log(response)
+        }).catch(error => {
+          console.log(error)
+        })
+      }
+      this.time = 60;
+      this.timer();
+    },
+    timer() {
+      if (this.time > 0) {
+        this.disabled = true
+        this.time--
+        this.btntxt = this.time + "s"
+        setTimeout(this.timer, 1000)
+      } else {
+        this.time = 0;
+        this.btntxt = "发送验证码";
+        this.disabled = false;
+      }
+    },
+
+    login_message() {
+      if (this.phone === '' || this.code === '') {
         this.$message({
-          message: "手机号不能为空",
-          type: "danger",
+          message: "手机号或验证码不能为空",
+          type: 'error',
           duration: 2000,
           showClose: true,
         })
       }
+      else if (this.phone_flag) {
+        console.log(11111)
+        this.$axios({
+          url: this.$settings.HOST + 'user/login_message/',
+          method: 'post',
+          data: {
+            phone: this.phone,
+            sms_code: this.sms_code
+          }
+        }).then(response => {
+          console.log(response.data, 207)
+          localStorage.setItem('token', response.data.data.token)
+          localStorage.setItem('username', response.data.data.username)
+          localStorage.setItem('id', response.data.data.id)
+          sessionStorage.setItem('token', response.data.data.token)
+          sessionStorage.setItem('username', response.data.data.username)
+          sessionStorage.setItem('id', response.data.data.id)
+          let self = this;
+          this.$alert("登录成功", "百知教育", {
+            callback() {
+              self.$router.push("/")
+            }
+          })
+        }).catch(error => {
+          console.log(error)
+          this.$message({
+            message: "登陆失败",
+            type: 'error',
+            duration: 2000,
+            showClose: true,
+          })
+        })
+      }
     },
+
+    check_phone() {
+      this.$axios({
+        url: this.$settings.HOST + "user/check_phone_login/",
+        method: 'post',
+        data: {
+          phone: this.phone,
+        }
+      }).then(response => {
+        console.log(response)
+        this.phone_flag = true
+      }).catch(error => {
+        console.log(error)
+        this.$message({
+          message: "手机号不正确",
+          type: 'success',
+          duration: 2000,
+          showClose: true,
+        })
+      })
+    },
+    //    验证码判断
+    // check_code() {
+    //   this.$axios({
+    //     url: this.$settings.HOST + "user/check_code_login/",
+    //     method: 'post',
+    //     data: {
+    //       sms_code: this.sms_code,
+    //     }
+    //   }).then(response => {
+    //     console.log(response)
+    //     this.phone_flag = true
+    //   }).catch(error => {
+    //     console.log(error)
+    //     this.$message({
+    //       message: "验证码不正确",
+    //       type: 'error',
+    //       duration: 2000,
+    //     })
+    //   })
+    //
+    // },
     // 点击登录按钮时 获取滑块验证码
-    get_captcha() {
+    login_btn() {
       this.$axios({
         url: this.$settings.HOST + "user/captcha/",
         method: 'get',
@@ -126,7 +234,6 @@ export default {
       document.getElementById("geetest1").innerHTML = "";
       captchaObj.appendTo("#geetest1");
     },
-
     // 用户登录请求
     user_login() {
       this.$axios({
@@ -138,11 +245,20 @@ export default {
         }
       }).then(res => {
         // 判断是否记住密码  保存用户信息
-        localStorage.clear();
-        localStorage.token = res.data.token;
-        localStorage.username = res.data.username;
-        localStorage.password = this.password;
-        localStorage.id = res.data.id;
+        if (this.remember_me) {
+          // 记住登录
+          sessionStorage.clear();
+          localStorage.token = res.data.token;
+          localStorage.id = res.data.id;
+          localStorage.username = res.data.username;
+        } else {
+          // 未记住登录
+          localStorage.clear();
+          sessionStorage.token = res.data.token;
+          sessionStorage.id = res.data.id;
+          sessionStorage.username = res.data.username;
+        }
+
         this.$message({
           message: "恭喜你，登录成功",
           type: 'success',
@@ -153,99 +269,6 @@ export default {
       }).catch(error => {
         console.log(error);
         this.$message.error("用户名或密码错误")
-      })
-    },
-    get_code() {
-      if (this.phone_flag) {
-        this.$axios({
-          url: this.$settings.HOST + 'user/message/',
-          method: 'get',
-          params: {
-            phone: this.phone,
-          }
-        }).then(response => {
-          console.log(response)
-          this.clock()
-        }).catch(error => {
-          console.log(error)
-          this.$message({
-            message: "验证码错误",
-            type: 'success',
-            duration: 2000,
-            showClose: true,
-          })
-        })
-      }
-      this.time = 60;
-      this.timer();
-    },
-    timer() {
-      if (this.time > 0) {
-        this.disabled = true
-        this.time--
-        this.btntxt = this.time + "s"
-        setTimeout(this.timer, 1000)
-      } else {
-        this.time = 0;
-        this.btntxt = "发送验证码";
-        this.disabled = false;
-      }
-    },
-    login_message() {
-      if (this.phone === '' || this.code === '') {
-        this.$message({
-          message: "手机号或验证码不能为空",
-          type: 'success',
-          duration: 2000,
-          showClose: true,
-        })
-      } else if (this.phone_flag) {
-        this.$axios({
-          url: this.$settings.HOST + 'user/login_message/',
-          method: 'post',
-          data: {
-            phone: this.phone,
-            code: this.code
-          }
-        }).then(response => {
-          console.log(response)
-          localStorage.setItem('token', response.data.token)
-          sessionStorage.setItem('token', response.data.token)
-          let self = this;
-          this.$alert("登录成功", "百知教育", {
-            callback() {
-              self.$router.push("/")
-            }
-          })
-        }).catch(error => {
-          console.log(error)
-          this.$message({
-            message: "登陆失败",
-            type: 'success',
-            duration: 2000,
-            showClose: true,
-          })
-        })
-      }
-    },
-    check_phone() {
-      this.$axios({
-        url: this.$settings.HOST + "user/check_phone/",
-        method: 'post',
-        data: {
-          phone: this.phone,
-        }
-      }).then(response => {
-        console.log(response)
-        this.phone_flag = true
-      }).catch(error => {
-        console.log(error)
-        this.$message({
-          message: "手机号不正确",
-          type: 'success',
-          duration: 2000,
-          showClose: true,
-        })
       })
     },
   }
